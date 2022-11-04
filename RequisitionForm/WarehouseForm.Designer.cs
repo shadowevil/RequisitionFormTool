@@ -1,6 +1,6 @@
 ﻿namespace RequisitionForm
 {
-    partial class Form1
+    partial class WarehouseForm
     {
         /// <summary>
         /// Required designer variable.

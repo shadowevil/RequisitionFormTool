@@ -9,27 +9,28 @@ using System.Windows.Forms;
 
 namespace RequisitionForm
 {
-    public partial class Form1 : Form
+    public partial class WarehouseForm : Form
     {
-        private const string CategoriesLocation = ".\\Data\\Categories.txt";
-        private const string UnitsLocation = ".\\Data\\Units.txt";
-        private const string PlantListLocation = ".\\Data\\PlantList.txt";
-        private const string DeliveryTypeLocation = ".\\Data\\DeliveryType.txt";
-        private const string ProductListLocation = ".\\Data\\ProductList.txt";
-        private const string XMLTemplateLocation = ".\\Data\\form.xml";
+        private const string CategoriesLocation = ".\\Data\\Warehouse\\Categories.txt";
+        private const string UnitsLocation = ".\\Data\\Warehouse\\Units.txt";
+        private const string DeliveryTypeLocation = ".\\Data\\Warehouse\\DeliveryType.txt";
+        private const string ProductListLocation = ".\\Data\\Warehouse\\ProductList.txt";
+        private const string XMLTemplateLocation = ".\\Data\\Warehouse\\form.xml";
 
         private List<Product> ProductList;
         private List<PlantLocation> plantLocations;
         private List<string> DeliveryType;
 
-        public Form1()
+        public WarehouseForm()
         {
             InitializeComponent();
+            
             this.DoubleBuffered = true;
             typeof(Panel).InvokeMember("DoubleBuffered", BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.NonPublic, null, panel1, new object[] { true });
             typeof(Panel).InvokeMember("DoubleBuffered", BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.NonPublic, null, panel2, new object[] { true });
             typeof(DataGridView).InvokeMember("DoubleBuffered", BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.NonPublic, null, ProductListBox, new object[] { true });
             typeof(DataGridView).InvokeMember("DoubleBuffered", BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.NonPublic, null, selectedItems, new object[] { true });
+            
             this.SizeChanged += Form1_SizeChanged;
             ProductListBox.EditingControlShowing += ProductListBox_EditingControlShowing;
             tabControl1.SelectedIndexChanged += TabControl1_SelectedIndexChanged;
@@ -171,27 +172,7 @@ namespace RequisitionForm
                 }
             }
 
-            plantLocations = new List<PlantLocation>();
-
-            using (StreamReader sr = new StreamReader(File.OpenRead(PlantListLocation)))
-            {
-                int lineNum = 0;
-                while (!sr.EndOfStream)
-                {
-                    string line = sr.ReadLine();
-                    string[] lineSplitByTab = line.Split('\t');
-
-                    PlantLocation PL = new PlantLocation();
-                    PL.CityState = lineSplitByTab[0];
-                    PL.PlantNum = lineSplitByTab[1];
-                    PL.plantEMail = lineSplitByTab[2];
-                    PL.PlantPhoneNumber = lineSplitByTab[3];
-                    PL.DisplayString = PL.CityState + " " + PL.PlantNum + " " + PL.plantEMail;
-                    plantLocations.Add(PL);
-
-                    lineNum++;
-                }
-            }
+            plantLocations = PlantLocation.LoadPlantLocations();
 
             DeliveryType = new List<string>();
             using (StreamReader sr = new StreamReader(File.OpenRead(DeliveryTypeLocation)))
@@ -245,7 +226,7 @@ namespace RequisitionForm
         {
             if(plantLocationListBox.SelectedItem == null) return;
             PlantLocation pl = plantLocationListBox.SelectedItem as PlantLocation;
-            lblSelectedLocation.Text = "#" + pl.PlantNum + "\n"
+            lblSelectedLocation.Text = pl.PlantNum + "\n"
                 + pl.CityState + "\n"
                 + pl.plantEMail + "\n"
                 + pl.PlantPhoneNumber;
@@ -492,33 +473,5 @@ namespace RequisitionForm
                 }
             }
         }
-    }
-
-    public class PlantLocation
-    {
-        public string CityState;
-        public string PlantNum;
-        public string plantEMail;
-        public string PlantPhoneNumber;
-
-        [System.ComponentModel.TypeConverter("System.Windows.Forms.Design.DataMemberFieldConverter, System.Design, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")]
-        public string DisplayString { get; set; }
-
-        public override string ToString()
-        {
-            return CityState + " " + PlantNum + " " + plantEMail;
-        }
-    }
-
-    public class Product
-    {
-        public static Dictionary<string, int> CategoryDictionary = new Dictionary<string, int>();
-        public static Dictionary<string, int> UNITDictionary = new Dictionary<string, int>();
-
-        public int category = -1;
-        public string ItemNum = "NOI";
-        public string description = "NULL";
-        public int OrderUNIT = -1;
-        public int OrderAmount = 0;
     }
 }
