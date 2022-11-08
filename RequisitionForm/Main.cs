@@ -16,85 +16,26 @@ namespace RequisitionForm
     {
         private Thread WarehouseFormThread;
         private Thread PurchaseFormThread;
-        private bool button1Hover = false;
-        private bool button2Hover = false;
-        private Pen buttonBorder;
-        private Pen buttonBorderHover;
+
+        private TransparentPanel button1;
+        private TransparentPanel button2;
 
         public Main()
         {
             InitializeComponent();
 
-            typeof(Panel).InvokeMember("DoubleBuffered", BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.NonPublic, null, panel1, new object[] { true });
-            typeof(Panel).InvokeMember("DoubleBuffered", BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.NonPublic, null, panel2, new object[] { true });
+            button1 = new TransparentPanel("panel1", new Rectangle(8, 8, 162, 249));
+            this.Controls.Add(button1);
+            this.Controls["panel1"].BringToFront();
+            button1.Click += Button1_Click;
 
-            this.MouseMove += Main_MouseMove;
-
-            panel2.Click += Panel2_Click;
-            pictureBox2.Click += Panel2_Click;
-            label1.Click += Panel2_Click;
-
-            panel1.Click += Panel1_Click;
-            pictureBox1.Click += Panel1_Click;
-            lblPurchasing.Click += Panel1_Click;
-
-            panel2.Paint += Panel2_Paint;
-            panel1.Paint += Panel2_Paint;
-
-            buttonBorder = new Pen(Brushes.Black, 1.0f);
-            buttonBorderHover = new Pen(Brushes.Orange, 1.0f);
+            button2 = new TransparentPanel("panel2", new Rectangle(296, 8, 162, 249));
+            this.Controls.Add(button2);
+            this.Controls["panel2"].BringToFront();
+            button2.Click += Button2_Click;
         }
 
-        protected override void OnMouseMove(MouseEventArgs e)
-        {
-            base.OnMouseMove(e);
-            this.Refresh();
-        }
-
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            base.OnPaint(e);
-            Point relativePoint = this.PointToClient(new Point(Cursor.Position.X, Cursor.Position.Y));
-            e.Graphics.DrawString(relativePoint.X + ":" + relativePoint.Y, DefaultFont, Brushes.Black, relativePoint.X, relativePoint.Y - 10.0f);
-        }
-
-        private void Main_MouseMove(object sender, MouseEventArgs e)
-        {
-            Point relativePoint = this.PointToClient(new Point(Cursor.Position.X, Cursor.Position.Y));
-            Rectangle r = panel1.Bounds;
-            Rectangle r2 = panel2.Bounds;
-
-            if (r.Contains(relativePoint) && !button1Hover)
-            {
-                button1Hover = true;
-                panel1.Refresh();
-            } else if (!r.Contains(relativePoint) && button1Hover)
-            {
-                button1Hover = false;
-                panel1.Refresh();
-            }
-
-            if (r2.Contains(relativePoint) && !button2Hover)
-            {
-                button2Hover = true;
-                panel2.Refresh();
-            }
-            else if (!r2.Contains(relativePoint) && button2Hover)
-            {
-                button2Hover = false;
-                panel2.Refresh();
-            }
-        }
-
-        private void Panel2_Paint(object sender, PaintEventArgs e)
-        {
-            Pen p = buttonBorder;
-            if ((sender as Panel).Name == "panel2" && button2Hover) p = buttonBorderHover;
-            if ((sender as Panel).Name == "panel1" && button1Hover) p = buttonBorderHover;
-            e.Graphics.DrawRectangle(p, new Rectangle(0, 0, (sender as Panel).Width - 1, (sender as Panel).Height - 1));
-        }
-
-        private void Panel2_Click(object sender, EventArgs e)
+        private void Button2_Click(object sender, EventArgs e)
         {
             WarehouseFormThread = new Thread(new ThreadStart(delegate
             {
@@ -104,7 +45,7 @@ namespace RequisitionForm
             WarehouseFormThread.Start();
         }
 
-        private void Panel1_Click(object sender, EventArgs e)
+        private void Button1_Click(object sender, EventArgs e)
         {
             PurchaseFormThread = new Thread(new ThreadStart(delegate
             {
@@ -112,6 +53,58 @@ namespace RequisitionForm
             }));
             PurchaseFormThread.SetApartmentState(ApartmentState.STA);
             PurchaseFormThread.Start();
+        }
+    }
+
+    public class TransparentPanel : Panel
+    {
+        private bool isMouseEnter = false;
+
+        public TransparentPanel(string name, Rectangle rect) : base()
+        {
+            this.Name = name;
+            this.Visible = true;
+            this.Location = new Point(rect.X, rect.Y);
+            this.Width = rect.Width;
+            this.Height = rect.Height;
+            this.Bounds = rect;
+        }
+
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                CreateParams cp = base.CreateParams;
+                cp.ExStyle |= 0x00000020; // WS_EX_TRANSPARENT
+                return cp;
+            }
+        }
+
+        protected override void OnMouseEnter(EventArgs e)
+        {
+            isMouseEnter = true;
+            this.Cursor = Cursors.Hand;
+            this.Refresh();
+            base.OnMouseEnter(e);
+        }
+
+        protected override void OnMouseLeave(EventArgs e)
+        {
+            isMouseEnter = false;
+            this.Cursor = Cursors.Default;
+            this.Refresh();
+            base.OnMouseLeave(e);
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            e.Graphics.DrawRectangle(new Pen((isMouseEnter ? Brushes.OrangeRed : Brushes.Black), 1.0f), 0, 0, this.Width - 1, this.Height - 1);
+            base.OnPaint(e);
+        }
+
+        protected override void OnPaintBackground(PaintEventArgs e)
+        {
+            //base.OnPaintBackground(e);
         }
     }
 }
